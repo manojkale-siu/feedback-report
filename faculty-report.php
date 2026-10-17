@@ -71,7 +71,20 @@ $type = '';
 if (isset($_POST['type'])) {
     $type = $_POST['type'];
 }
-if ($type == 'responses') {
+$responseFeedbackOptions = [
+    'faculty_curriculum' => [
+        'label' => 'Faculty Feedback - Curriculum',
+        'name_pattern' => '%Faculty Feedback%Curriculum%',
+    ],
+];
+$selectedResponseFeedbackKey = $_POST['response_feedback'] ?? '';
+$selectedResponseFeedback = $responseFeedbackOptions[$selectedResponseFeedbackKey] ?? null;
+$responseFeedbackNamePattern = $selectedResponseFeedback['name_pattern'] ?? '';
+$data = [];
+$questions = [];
+$grouped = [];
+
+if ($type === 'responses' && $selectedResponseFeedback !== null) {
 
     $feedbackResponse=$conn->query("SELECT 
             u.id AS userid,
@@ -95,23 +108,23 @@ if ($type == 'responses') {
             ON cc.id = con.instanceid
         JOIN {$prefix}feedback f 
             ON f.course = cc.id
-           AND f.name LIKE '%Faculty Feedback - Curriculum%'
+           AND f.name LIKE '{$responseFeedbackNamePattern}'
            AND f.course IN (" . $_SESSION['courseId'] . ")
-        LEFT JOIN {$prefix}feedback_completed fc 
+        JOIN {$prefix}feedback_completed fc
             ON fc.feedback = f.id 
            AND fc.userid = ra.userid
         JOIN {$prefix}user u 
             ON u.id = ra.userid
-        LEFT JOIN {$prefix}feedback_value fv 
+        JOIN {$prefix}feedback_value fv
             ON fv.completed = fc.id
-        LEFT JOIN {$prefix}feedback_item fi 
+        JOIN {$prefix}feedback_item fi
             ON fi.id = fv.item
         WHERE ra.roleid = 3
         ORDER BY u.id, cc.id,fi.id");
         
         
         
-    $data = $feedbackResponse->fetch_all(MYSQLI_ASSOC);
+    $data = $feedbackResponse ? $feedbackResponse->fetch_all(MYSQLI_ASSOC) : [];
     
     if($debugging) {
         
@@ -138,16 +151,16 @@ if ($type == 'responses') {
             ON cc.id = con.instanceid
         JOIN {$prefix}feedback f 
             ON f.course = cc.id
-           AND f.name LIKE '%Faculty Feedback - Curriculum%'
+           AND f.name LIKE '{$responseFeedbackNamePattern}'
            AND f.course IN (" . $_SESSION['courseId'] . ")
-        LEFT JOIN {$prefix}feedback_completed fc 
+        JOIN {$prefix}feedback_completed fc
             ON fc.feedback = f.id 
            AND fc.userid = ra.userid
         JOIN {$prefix}user u 
             ON u.id = ra.userid
-        LEFT JOIN {$prefix}feedback_value fv 
+        JOIN {$prefix}feedback_value fv
             ON fv.completed = fc.id
-        LEFT JOIN {$prefix}feedback_item fi 
+        JOIN {$prefix}feedback_item fi
             ON fi.id = fv.item
         WHERE ra.roleid = 3
         ORDER BY u.id, cc.id,fi.id
@@ -195,7 +208,7 @@ if ($type == 'responses') {
     }
 
 }
-else{
+elseif ($type !== 'responses') {
     $programs = $conn->query("
             SELECT 
             u.id AS userid,
@@ -291,6 +304,18 @@ else{
                     <option value="consolidated" <?php if($type=="consolidated") echo "selected"; ?>>Consolidated Report</option>
                     <option value="responses" <?php if($type=="responses") echo "selected"; ?>>Responses Report</option>
                 </select>
+
+                <span id="responseFeedbackControl" <?php if ($type !== 'responses') { echo 'style="display:none;"'; } ?>>
+                    <label for="responseFeedback">Feedback:</label>
+                    <select name="response_feedback" id="responseFeedback">
+                        <option value="">Select feedback</option>
+                        <?php foreach ($responseFeedbackOptions as $feedbackKey => $feedbackOption) { ?>
+                            <option value="<?php echo htmlspecialchars($feedbackKey); ?>" <?php if ($selectedResponseFeedbackKey === $feedbackKey) { echo 'selected'; } ?>>
+                                <?php echo htmlspecialchars($feedbackOption['label']); ?>
+                            </option>
+                        <?php } ?>
+                    </select>
+                </span>
                 
                 <input type="hidden" name="initialData" value='<?php echo json_encode($_SESSION["initialData"]); ?>'>
                   
@@ -307,7 +332,9 @@ else{
             </div>
 
 
-            <button onclick="exportTableToExcel('myTable', '<?php echo $type; ?>' )">Download</button>
+            <?php if ($type !== 'responses' || !empty($grouped)) { ?>
+                <button onclick="exportTableToExcel('myTable', '<?php echo $type; ?>' )">Download</button>
+            <?php } ?>
         </div>
 
         <?php if ($type == 'analysis' || $type=="consolidated" ) { ?>
@@ -460,7 +487,11 @@ else{
     </table>
 <?php } else { ?>
     <div style="margin:20px; padding:20px; border:1px solid #ccc; background:#f9f9f9; text-align:center; font-size:18px; color:#555; border-radius:8px;">
-        🚫 No faculty feedback records found.
+        <?php if ($selectedResponseFeedback === null) { ?>
+            Select a feedback type to view faculty responses.
+        <?php } else { ?>
+            No responses have been submitted for <?php echo htmlspecialchars($selectedResponseFeedback['label']); ?> in the selected course(s).
+        <?php } ?>
     </div>
 <?php } ?>
 
@@ -538,11 +569,28 @@ else{
             document.body.removeChild(downloadLink);
         }
 
-        document.getElementById('type').addEventListener("change", function () {
-            const type = this.value;
-            console.log(type);
+        const reportType = document.getElementById('type');
+        const responseFeedback = document.getElementById('responseFeedback');
+        const responseFeedbackControl = document.getElementById('responseFeedbackControl');
+        const reportTypeForm = document.getElementById('reportTypeForm');
 
-            document.getElementById('reportTypeForm').submit();
+        reportType.addEventListener('change', function () {
+            if (this.value === 'responses') {
+                responseFeedbackControl.style.display = 'inline';
+                if (responseFeedback.value !== '') {
+                    reportTypeForm.submit();
+                }
+                return;
+            }
+
+            responseFeedbackControl.style.display = 'none';
+            reportTypeForm.submit();
+        });
+
+        responseFeedback.addEventListener('change', function () {
+            if (reportType.value === 'responses' && this.value !== '') {
+                reportTypeForm.submit();
+            }
         });
 
 
