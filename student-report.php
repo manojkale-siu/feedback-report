@@ -721,6 +721,7 @@ if ($type == 'responses') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consolidated Feedback</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/report.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
@@ -771,16 +772,23 @@ if ($type == 'responses') {
     
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <form method="post" id='reportTypeForm'>
+    <div class="container report-page">
+        <header class="header report-header">
+            <div class="headings">
+                <h1><?php echo htmlspecialchars($programname); ?></h1>
+                <h1><?php echo htmlspecialchars($batchname); ?></h1>
+                <h1><?php echo htmlspecialchars($semestername); ?></h1>
+            </div>
+
+            <div class="report-toolbar">
+            <form method="post" id='reportTypeForm' class="report-control-group">
                 <select name="type" id="type">
                     <option value="analysis" <?php if($type=="analysis") echo "selected"; ?>>Analysis Report</option>
                     <option value="consolidated" <?php if($type=="consolidated") echo "selected"; ?>>Consolidated Report</option>
                     <option value="responses" <?php if($type=="responses") echo "selected"; ?>>Responses Report</option>
                 </select>
 
-                <span id="responseFeedbackControl" <?php if ($type !== 'responses') { echo 'style="display:none;"'; } ?>>
+                <span id="responseFeedbackControl" class="response-feedback-control <?php if ($type === 'responses' && $selectedResponseFeedback === null) { echo 'is-highlighted'; } ?>" <?php if ($type !== 'responses') { echo 'style="display:none;"'; } ?>>
                     <label for="responseFeedback">Feedback:</label>
                     <select name="response_feedback" id="responseFeedback">
                         <option value="">Select feedback</option>
@@ -801,13 +809,7 @@ if ($type == 'responses') {
                 
             </form>
 
-            <div class="headings">
-                <h1><?php echo htmlspecialchars($programname); ?></h1>
-                <h1><?php echo htmlspecialchars($batchname); ?></h1>
-                <h1><?php echo htmlspecialchars($semestername); ?></h1>
-            </div>
-
-            <div id="reportSearchTools">
+            <div id="reportSearchTools" class="report-search-tools">
                 <label for="reportSearch">Search:</label>
                 <input type="search" id="reportSearch" placeholder="User, course, or feedback">
                 <label for="reportPageSize">Rows:</label>
@@ -820,13 +822,21 @@ if ($type == 'responses') {
                 <button type="button" id="reportNextPage">Next</button>
             </div>
 
-            <?php if($type == 'responses' && !empty($responseGroups)) { ?>
-                <button onclick="exportToExcel(['myTable', 'summaryLikertTable', 'summaryYesNoTable'], 'Feedback_Report')">Download Excel</button>
-            <?php } else { ?>
-                <button onclick="exportTableToExcel('myTable', 'Feedback Report')">Download Excel</button>
-            <?php } ?>
-            
-        </div>
+            <div class="report-actions">
+                <a class="report-button report-button-secondary" href="index.php">Go back</a>
+                <?php if ($type !== 'responses' || !empty($responseGroups)) { ?>
+                    <?php if($type == 'responses') { ?>
+                        <button type="button" onclick="exportToExcel(['myTable', 'summaryLikertTable', 'summaryYesNoTable'], 'Feedback_Report')">Download Excel</button>
+                    <?php } else { ?>
+                        <button type="button" onclick="exportTableToExcel('myTable', 'Feedback Report')">Download Excel</button>
+                    <?php } ?>
+                <?php } ?>
+            </div>
+            </div>
+        </header>
+
+        <p class="report-hint">Use pagination to view more records. Download Excel to get the complete report.</p>
+        <div id="reportContent">
 
         <?php if ($type == 'analysis') { ?>
            <div style="overflow-x:auto; max-width:100%;">
@@ -944,11 +954,11 @@ if ($type == 'responses') {
 
     <!-- Student Responses Report -->
     <?php if ($selectedResponseFeedback === null) { ?>
-        <div class="data" style="text-align:center;">
+        <div class="report-empty-state report-feedback-required">
             Select a feedback type to view student responses.
         </div>
     <?php } elseif (empty($responseGroups)) { ?>
-        <div class="data" style="text-align:center;">
+        <div class="report-empty-state">
             No responses have been submitted for <?php echo htmlspecialchars($selectedResponseFeedback['label']); ?> in the selected course(s).
         </div>
     <?php } else { ?>
@@ -1128,6 +1138,7 @@ if ($type == 'responses') {
                 </table>
             </center>
         <?php } ?>
+        </div>
 
     </div>
     <?php } ?>
@@ -1151,6 +1162,7 @@ if ($type == 'responses') {
 
         <?php } ?>
 
+    </div>
     </div>
 
     <script src="assets/js/report-search.js"></script>
@@ -1268,22 +1280,33 @@ if ($type == 'responses') {
         const responseFeedback = document.getElementById('responseFeedback');
         const responseFeedbackControl = document.getElementById('responseFeedbackControl');
         const reportTypeForm = document.getElementById('reportTypeForm');
+        const reportContent = document.getElementById('reportContent');
+
+        function showFeedbackRequiredMessage() {
+            reportContent.innerHTML = '<div class="report-empty-state report-feedback-required">Select a feedback type to view student responses.</div>';
+            responseFeedbackControl.classList.add('is-highlighted');
+            responseFeedback.focus();
+        }
 
         reportType.addEventListener('change', function () {
             if (this.value === 'responses') {
-                responseFeedbackControl.style.display = 'inline';
+                responseFeedbackControl.style.display = 'flex';
                 if (responseFeedback.value !== '') {
                     reportTypeForm.submit();
+                } else {
+                    showFeedbackRequiredMessage();
                 }
                 return;
             }
 
             responseFeedbackControl.style.display = 'none';
+            responseFeedbackControl.classList.remove('is-highlighted');
             reportTypeForm.submit();
         });
 
         responseFeedback.addEventListener('change', function () {
             if (reportType.value === 'responses' && this.value !== '') {
+                responseFeedbackControl.classList.remove('is-highlighted');
                 reportTypeForm.submit();
             }
         });
