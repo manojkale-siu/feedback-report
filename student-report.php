@@ -97,6 +97,12 @@ $semestername = !empty($_SESSION['initialData']['semesterSelect'])
 
 $type = isset($_POST['type']) ? $_POST['type'] : 'analysis';
 
+// The consolidated student report is no longer available. Keep saved or stale
+// form submissions on the default report instead of rendering an empty table.
+if ($type === 'consolidated') {
+    $type = 'analysis';
+}
+
 $responseFeedbackOptions = [
     'student_faculty' => [
         'label' => 'Student Feedback - Faculty',
@@ -773,7 +779,6 @@ if ($type == 'responses') {
             <form method="post" id='reportTypeForm' class="report-control-group">
                 <select name="type" id="type">
                     <option value="analysis" <?php if($type=="analysis") echo "selected"; ?>>Analysis Report</option>
-                    <option value="consolidated" <?php if($type=="consolidated") echo "selected"; ?>>Consolidated Report</option>
                     <option value="responses" <?php if($type=="responses") echo "selected"; ?>>Responses Report</option>
                 </select>
 
@@ -982,7 +987,7 @@ if ($type == 'responses') {
                                 $labels = ['1' => 'Strongly Agree', '2' => 'Agree', '3' => 'Neutral', '4' => 'Disagree', '5' => 'Strongly Disagree'];
                                 $label = $labels[$answer['value']] ?? ($answer['value'] === '' ? 'NA' : $answer['value']);
                             } elseif ($answer['typ'] === 'multichoice') {
-                                $labels = ['1' => 'Yes', '2' => 'No'];
+                                $labels = ['1' => 'Yes', '2' => 'No', '3' => 'Maybe'];
                                 $label = $labels[$answer['value']] ?? ($answer['value'] === '' ? 'NA' : $answer['value']);
                             } else {
                                 $label = $answer['value'] === '' ? 'NA' : $answer['value'];
