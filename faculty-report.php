@@ -331,6 +331,11 @@ elseif ($type !== 'responses') {
                 <h1><?php echo $semestername; ?></h1>
             </div>
 
+            <div id="reportSearchTools">
+                <label for="reportSearch">Search:</label>
+                <input type="search" id="reportSearch" placeholder="User, course, or feedback">
+            </div>
+
 
             <?php if ($type !== 'responses' || !empty($grouped)) { ?>
                 <button onclick="exportTableToExcel('myTable', '<?php echo $type; ?>' )">Download</button>
@@ -499,6 +504,7 @@ elseif ($type !== 'responses') {
 
         <?php } ?>
     </div>
+    <script src="assets/js/report-search.js"></script>
     <script>
 
         let programname = '<?php echo $programname; ?>';
@@ -591,6 +597,12 @@ elseif ($type !== 'responses') {
             if (reportType.value === 'responses' && this.value !== '') {
                 reportTypeForm.submit();
             }
+        });
+
+        initReportSearch({
+            tableId: 'myTable',
+            inputId: 'reportSearch',
+            toolsId: 'reportSearchTools'
         });
 
 

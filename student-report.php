@@ -807,6 +807,11 @@ if ($type == 'responses') {
                 <h1><?php echo htmlspecialchars($semestername); ?></h1>
             </div>
 
+            <div id="reportSearchTools">
+                <label for="reportSearch">Search:</label>
+                <input type="search" id="reportSearch" placeholder="User, course, or feedback">
+            </div>
+
             <?php if($type == 'responses' && !empty($responseGroups)) { ?>
                 <button onclick="exportToExcel(['myTable', 'summaryLikertTable', 'summaryYesNoTable'], 'Feedback_Report')">Download Excel</button>
             <?php } else { ?>
@@ -1140,6 +1145,7 @@ if ($type == 'responses') {
 
     </div>
 
+    <script src="assets/js/report-search.js"></script>
     <script>
         function exportTableToExcel(tableID, filename = '') {
             const table = document.getElementById(tableID);
@@ -1272,6 +1278,12 @@ if ($type == 'responses') {
             if (reportType.value === 'responses' && this.value !== '') {
                 reportTypeForm.submit();
             }
+        });
+
+        initReportSearch({
+            tableId: 'myTable',
+            inputId: 'reportSearch',
+            toolsId: 'reportSearchTools'
         });
     </script>
 </body>
