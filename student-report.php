@@ -726,17 +726,6 @@ if ($type == 'responses') {
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
     <style>
-        #myTable th:first-child,
-        #myTable td:first-child,
-        #myTable th:nth-child(2),
-        #myTable td:nth-child(2),
-        #myTable th:nth-child(3),
-        #myTable td:nth-child(3) {
-            position: sticky;
-            left: 0;
-            background: #fff;
-            z-index: 2;
-        }
         .feedback-table th {
             white-space: nowrap;
             text-align: center;
@@ -772,7 +761,7 @@ if ($type == 'responses') {
     
 </head>
 <body>
-    <div class="container report-page">
+    <div class="container report-page student-report-page">
         <header class="header report-header">
             <div class="headings">
                 <h1><?php echo htmlspecialchars($programname); ?></h1>
@@ -841,7 +830,7 @@ if ($type == 'responses') {
         <?php if ($type == 'analysis') { ?>
            <div style="overflow-x:auto; max-width:100%;">
             <div class="data">
-                <table border='1' id="myTable">
+                <table border='1' id="myTable" class="report-table">
                     <thead>
                         <?php
                         echo "<tr>";
@@ -963,7 +952,7 @@ if ($type == 'responses') {
         </div>
     <?php } else { ?>
     <div class="data">
-        <table border='1' id="myTable">
+        <table border='1' id="myTable" class="report-table">
             <thead>
                 <tr>
                     <th>Sr No</th>

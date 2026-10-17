@@ -295,3 +295,86 @@
     width: 100%;
   }
 }
+
+/* Horizontally-scrollable report tables with non-overlapping sticky identity columns. */
+.report-page .data {
+  width: 100%;
+  overflow-x: auto;
+  position: relative;
+}
+
+.report-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.report-table th,
+.report-table td {
+  border-right: 1px solid #222;
+  border-bottom: 1px solid #222;
+}
+
+.report-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.student-report-page .report-table th:first-child,
+.student-report-page .report-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 15;
+  min-width: 70px;
+  width: 70px;
+  background: #f5f4ff;
+}
+
+.student-report-page .report-table th:nth-child(2),
+.student-report-page .report-table td:nth-child(2) {
+  position: sticky;
+  left: 70px;
+  z-index: 15;
+  min-width: 180px;
+  width: 180px;
+  background: #f5f4ff;
+}
+
+.student-report-page .report-table th:nth-child(3),
+.student-report-page .report-table td:nth-child(3) {
+  position: sticky;
+  left: 250px;
+  z-index: 15;
+  min-width: 250px;
+  width: 250px;
+  background: #f5f4ff;
+  box-shadow: 4px 0 6px -4px rgba(0, 0, 0, 0.75);
+}
+
+.faculty-report-page .report-table th:first-child,
+.faculty-report-page .report-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 15;
+  min-width: 190px;
+  width: 190px;
+  background: #f5f4ff;
+}
+
+.faculty-report-page .report-table th:nth-child(2),
+.faculty-report-page .report-table td:nth-child(2) {
+  position: sticky;
+  left: 190px;
+  z-index: 15;
+  min-width: 210px;
+  width: 210px;
+  background: #f5f4ff;
+  box-shadow: 4px 0 6px -4px rgba(0, 0, 0, 0.75);
+}
+
+.student-report-page .report-table thead th:nth-child(-n + 3),
+.faculty-report-page .report-table thead th:nth-child(-n + 2) {
+  z-index: 30;
+}

@@ -297,7 +297,7 @@ elseif ($type !== 'responses') {
 </head>
 
 <body>
-    <div class="container report-page">
+    <div class="container report-page faculty-report-page">
         <header class="header report-header">
             <div class="headings">
                 <h1><?php echo $programname; ?></h1>
@@ -363,7 +363,7 @@ elseif ($type !== 'responses') {
 
            <div class="data">
    <?php if (!empty($data)) { ?>
-    <table border="1" id="myTable">
+    <table border="1" id="myTable" class="report-table">
         <thead>
             <?php
             // Step 1: Collect unique feedbacks (course + feedback)
@@ -461,7 +461,7 @@ elseif ($type !== 'responses') {
         <?php } else { ?>
          <div class="data">
     <?php if (!empty($grouped)) { ?>
-    <table border="1" id="myTable">
+    <table border="1" id="myTable" class="report-table">
         <thead>
             <tr>
                 <th>Course Name</th>
