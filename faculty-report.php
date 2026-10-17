@@ -334,6 +334,14 @@ elseif ($type !== 'responses') {
             <div id="reportSearchTools">
                 <label for="reportSearch">Search:</label>
                 <input type="search" id="reportSearch" placeholder="User, course, or feedback">
+                <label for="reportPageSize">Rows:</label>
+                <select id="reportPageSize">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                </select>
+                <button type="button" id="reportPreviousPage">Previous</button>
+                <span id="reportPageInfo"></span>
+                <button type="button" id="reportNextPage">Next</button>
             </div>
 
 
@@ -602,7 +610,11 @@ elseif ($type !== 'responses') {
         initReportSearch({
             tableId: 'myTable',
             inputId: 'reportSearch',
-            toolsId: 'reportSearchTools'
+            toolsId: 'reportSearchTools',
+            pageSizeId: 'reportPageSize',
+            previousButtonId: 'reportPreviousPage',
+            nextButtonId: 'reportNextPage',
+            pageInfoId: 'reportPageInfo'
         });
 
 
