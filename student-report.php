@@ -97,6 +97,22 @@ $semestername = !empty($_SESSION['initialData']['semesterSelect'])
 
 $type = isset($_POST['type']) ? $_POST['type'] : 'analysis';
 
+$responseFeedbackOptions = [
+    'student_faculty' => [
+        'label' => 'Student Feedback - Faculty',
+        'name_pattern' => '%Student Feedback%Faculty%',
+    ],
+    'student_curriculum' => [
+        'label' => 'Student Feedback - Curriculum',
+        'name_pattern' => '%Student Feedback%Curriculum%',
+    ],
+];
+$selectedResponseFeedbackKey = $_POST['response_feedback'] ?? '';
+$selectedResponseFeedback = $responseFeedbackOptions[$selectedResponseFeedbackKey] ?? null;
+$responseRows = [];
+$responseQuestions = [];
+$responseGroups = [];
+
 /* -------------------------
    ANALYSIS
    ------------------------- */
@@ -642,6 +658,60 @@ if ($type == 'responses') {
         print_r($studentAccessibleFeedback);
         echo "<br> </pre>";
     }
+
+    if ($selectedResponseFeedback !== null) {
+        $feedbackNamePattern = $selectedResponseFeedback['name_pattern'];
+        $responseQuery = $conn->query("
+            SELECT DISTINCT
+                u.id AS userid,
+                u.username,
+                CONCAT(u.firstname, ' ', u.lastname) AS fullname,
+                cc.id AS courseid,
+                cc.fullname AS coursename,
+                fi.name AS question,
+                fi.typ,
+                fv.value
+            FROM {$prefix}feedback f
+            JOIN {$prefix}course cc ON cc.id = f.course
+            JOIN {$prefix}feedback_completed fc ON fc.feedback = f.id
+            JOIN {$prefix}feedback_value fv ON fv.completed = fc.id
+            JOIN {$prefix}feedback_item fi ON fi.id = fv.item
+            JOIN {$prefix}context con ON con.instanceid = cc.id AND con.contextlevel = 50
+            JOIN {$prefix}role_assignments ra ON ra.contextid = con.id
+                AND ra.userid = fc.userid
+                AND ra.roleid = 5
+            JOIN {$prefix}user u ON u.id = fc.userid
+                AND u.deleted = 0
+                AND u.suspended = 0
+            WHERE f.course IN ({$cid_in})
+                AND f.name LIKE '{$feedbackNamePattern}'
+            ORDER BY u.id, cc.id, CAST(SUBSTRING_INDEX(fi.name, '.', 1) AS UNSIGNED), fi.id
+        ");
+
+        if ($responseQuery) {
+            while ($responseRow = $responseQuery->fetch_assoc()) {
+                if (trim($responseRow['question']) === '') {
+                    continue;
+                }
+
+                $responseRows[] = $responseRow;
+                $responseQuestions[$responseRow['question']] = $responseRow['question'];
+                $responseGroupKey = $responseRow['userid'] . ':' . $responseRow['courseid'];
+                if (!isset($responseGroups[$responseGroupKey])) {
+                    $responseGroups[$responseGroupKey] = [
+                        'username' => $responseRow['username'],
+                        'fullname' => $responseRow['fullname'],
+                        'coursename' => $responseRow['coursename'],
+                        'answers' => [],
+                    ];
+                }
+                $responseGroups[$responseGroupKey]['answers'][$responseRow['question']] = [
+                    'value' => $responseRow['value'],
+                    'typ' => $responseRow['typ'],
+                ];
+            }
+        }
+    }
 } // end if responses
 
 ?>
@@ -710,6 +780,18 @@ if ($type == 'responses') {
                     <option value="responses" <?php if($type=="responses") echo "selected"; ?>>Responses Report</option>
                 </select>
 
+                <span id="responseFeedbackControl" <?php if ($type !== 'responses') { echo 'style="display:none;"'; } ?>>
+                    <label for="responseFeedback">Feedback:</label>
+                    <select name="response_feedback" id="responseFeedback">
+                        <option value="">Select feedback</option>
+                        <?php foreach ($responseFeedbackOptions as $feedbackKey => $feedbackOption) { ?>
+                            <option value="<?php echo htmlspecialchars($feedbackKey); ?>" <?php if ($selectedResponseFeedbackKey === $feedbackKey) { echo 'selected'; } ?>>
+                                <?php echo htmlspecialchars($feedbackOption['label']); ?>
+                            </option>
+                        <?php } ?>
+                    </select>
+                </span>
+
                 <input type="hidden" name="initialData"
                     value="<?php echo htmlspecialchars(json_encode($initialData)); ?>">
                 
@@ -725,7 +807,7 @@ if ($type == 'responses') {
                 <h1><?php echo htmlspecialchars($semestername); ?></h1>
             </div>
 
-            <?php if($type == 'responses') { ?>
+            <?php if($type == 'responses' && !empty($responseGroups)) { ?>
                 <button onclick="exportToExcel(['myTable', 'summaryLikertTable', 'summaryYesNoTable'], 'Feedback_Report')">Download Excel</button>
             <?php } else { ?>
                 <button onclick="exportTableToExcel('myTable', 'Feedback Report')">Download Excel</button>
@@ -848,7 +930,16 @@ if ($type == 'responses') {
         <?php } elseif ($type == 'responses') { ?>
 
     <!-- Student Responses Report -->
-    <div class="data" >
+    <?php if ($selectedResponseFeedback === null) { ?>
+        <div class="data" style="text-align:center;">
+            Select a feedback type to view student responses.
+        </div>
+    <?php } elseif (empty($responseGroups)) { ?>
+        <div class="data" style="text-align:center;">
+            No responses have been submitted for <?php echo htmlspecialchars($selectedResponseFeedback['label']); ?> in the selected course(s).
+        </div>
+    <?php } else { ?>
+    <div class="data">
         <table border='1' id="myTable">
             <thead>
                 <tr>
@@ -856,7 +947,7 @@ if ($type == 'responses') {
                     <th>Student Name</th>
                     <th>Course Name</th>
                     <?php
-                    foreach ($feedbackQuestionsArray as $questionId => $questionName) {
+                    foreach ($responseQuestions as $questionName) {
                         echo "<th>" . htmlspecialchars($questionName) . "</th>";
                     }
                     ?>
@@ -865,142 +956,47 @@ if ($type == 'responses') {
             <tbody>
                 <?php
                 $srno = 1;
+                foreach ($responseGroups as $responseGroup) {
+                    echo "<tr>";
+                    echo "<td id='value'>" . $srno . "</td>";
+                    echo "<td id='value'>" . htmlspecialchars($responseGroup['username']) . " - " . htmlspecialchars($responseGroup['fullname']) . "</td>";
+                    echo "<td id='value'>" . htmlspecialchars($responseGroup['coursename']) . "</td>";
 
-                foreach ($studentAccessibleFeedback as $studentId => $courseDetails) {
-                    $studentDetails = $users[$studentId] ?? null;
-                    if (!$studentDetails) {
-                        $tmp = $conn->query("SELECT username, CONCAT(firstname, ' ', lastname) AS fullname FROM {$prefix}user WHERE id = " . (int)$studentId);
-                        $studentDetails = ($tmp ? $tmp->fetch_assoc() : null) ?? ['username' => '-', 'fullname' => '-'];
+                    foreach ($responseQuestions as $questionName) {
+                        $answer = $responseGroup['answers'][$questionName] ?? null;
+                        $label = '-';
+                        if ($answer !== null) {
+                            if ($answer['typ'] === 'multichoicerated') {
+                                $labels = ['1' => 'Strongly Agree', '2' => 'Agree', '3' => 'Neutral', '4' => 'Disagree', '5' => 'Strongly Disagree'];
+                                $label = $labels[$answer['value']] ?? ($answer['value'] === '' ? 'NA' : $answer['value']);
+                            } elseif ($answer['typ'] === 'multichoice') {
+                                $labels = ['1' => 'Yes', '2' => 'No'];
+                                $label = $labels[$answer['value']] ?? ($answer['value'] === '' ? 'NA' : $answer['value']);
+                            } else {
+                                $label = $answer['value'] === '' ? 'NA' : $answer['value'];
+                            }
+                        }
+                        echo "<td id='value'>" . htmlspecialchars($label) . "</td>";
                     }
-
-                    $courseCount = is_array($courseDetails) ? count($courseDetails) : 0;
-                    if ($courseCount <= 0) continue;
-                    $firstCourse = true;
-
-                    foreach ($courseDetails as $courseId => $feedbackList) {
-                        $courseName = $courses[$courseId] ?? null;
-                        if ($courseName === null) {
-                            $tmpc = $conn->query("SELECT fullname FROM {$prefix}course WHERE id = " . (int)$courseId);
-                            $tmpcRow = $tmpc ? $tmpc->fetch_assoc() : null;
-                            $courseName = $tmpcRow['fullname'] ?? '-';
-                        }
-
-                        echo "<tr>";
-
-                        if ($firstCourse) {
-                            echo "<td rowspan='$courseCount' id='value'>" . $srno . "</td>";
-                            echo "<td rowspan='$courseCount' id='value'>" . htmlspecialchars($studentDetails['username']) . " - " . htmlspecialchars($studentDetails['fullname']) . "</td>";
-                            $firstCourse = false;
-                        }
-
-                        echo "<td id='value'>" . htmlspecialchars($courseName) . "</td>";
-
-                        $responses = false;
-                        if (is_array($feedbackList) && !empty($feedbackList)) {
-
-                            $feedbackIdsArr = array_keys($feedbackList);
-                            $feedbackIdsArr = array_filter($feedbackIdsArr, function ($v) {
-                                return is_numeric($v);
-                            });
-                            if (!empty($feedbackIdsArr)) {
-                                $feedbackIds = implode(',', array_map('intval', $feedbackIdsArr));
-
-                                $responses = $conn->query("
-                                    SELECT fi.id AS questionId, fi.name AS question, fv.value, fi.typ, fi.presentation
-                                    FROM {$prefix}feedback_item fi
-                                    JOIN {$prefix}feedback_value fv ON fv.item = fi.id
-                                    JOIN {$prefix}feedback_completed fc ON fc.id = fv.completed
-                                    JOIN {$prefix}feedback f ON f.id = fc.feedback
-                                    WHERE fc.feedback IN ({$feedbackIds})  
-                                      AND fc.userid = " . (int)$studentId . "
-                                    ORDER BY CAST(SUBSTRING_INDEX(fi.name, '.', 1) AS UNSIGNED) ASC
-                                ");
-                            }
-                        }
-
-                        if ($responses && $responses->num_rows > 0) {
-                            $answers = [];
-
-                            while ($answer = mysqli_fetch_assoc($responses)) {
-                                if ($answer['typ'] === "multichoicerated") {
-                                    switch ($answer['value']) {
-                                        case "1": $label = "Strongly Agree"; break;
-                                        case "2": $label = "Agree"; break;
-                                        case "3": $label = "Neutral"; break;
-                                        case "4": $label = "Disagree"; break;
-                                        case "5": $label = "Strongly Disagree"; break;
-                                        case "":  $label = "NA"; break;
-                                        default:  $label = $answer['value']; break;
-                                    }
-                                } elseif ($answer['typ'] === "multichoice") {
-                                    switch ($answer['value']) {
-                                        case "1": $label = "Yes"; break;
-                                        case "2": $label = "No"; break;
-                                        case "":  $label = "NA"; break;
-                                        default:  $label = $answer['value']; break;
-                                    }
-                                } else {
-                                    $label = $answer['value'];
-                                    if ($label == "") $label = "NA";
-                                }
-
-                                $answers[$answer['question']] = $label;
-                            }
-
-                            foreach ($feedbackQuestionsArray as $qid => $qname) {
-                                echo "<td id='value'>" . htmlspecialchars($answers[$qname] ?? "-") . "</td>";
-                            }
-
-                        } else {
-                            foreach ($feedbackQuestionsArray as $qid => $qname) {
-                                echo "<td id='value'>-</td>";
-                            }
-                        }
-
-                        echo "</tr>";
-                    }
+                    echo "</tr>";
                     $srno++;
                 }
                 ?>
             </tbody>
         </table>
     </div>
+    <?php } ?>
 
     <!-- Summary section -->
+    <?php if (!empty($responseRows)) { ?>
     <div class="data" style="margin-top:30px;">
         <h2 style='text-align:center;'>Summary of Student Responses</h2>
 
         <?php
-        $allFeedbackIds = [];
-        foreach ($studentAccessibleFeedback as $studentId => $courseDetails) {
-            if (!is_array($courseDetails)) continue;
-            foreach ($courseDetails as $courseId => $feedbackList) {
-                if (is_array($feedbackList)) {
-                    $allFeedbackIds = array_merge($allFeedbackIds, array_keys($feedbackList));
-                }
-            }
-        }
-        $allFeedbackIds = array_unique(array_filter($allFeedbackIds, 'is_numeric'));
-
-        if (!empty($allFeedbackIds)) {
-            $allResponses = $conn->query("
-                SELECT fi.id AS questionId, fi.name AS question, fv.value, fi.typ
-                FROM {$prefix}feedback_item fi
-                JOIN {$prefix}feedback_value fv ON fv.item = fi.id
-                JOIN {$prefix}feedback_completed fc ON fc.id = fv.completed
-                JOIN {$prefix}feedback f ON f.id = fc.feedback
-                WHERE fc.feedback IN (" . implode(',', array_map('intval', $allFeedbackIds)) . ")
-                ORDER BY CAST(SUBSTRING_INDEX(fi.name, '.', 1) AS UNSIGNED) ASC
-            ");
-        } else {
-            $allResponses = false;
-        }
-
         $summaryLikert = [];
         $summaryYesNo = [];
 
-        if ($allResponses) {
-            while ($row = mysqli_fetch_assoc($allResponses)) {
+        foreach ($responseRows as $row) {
                 $question = $row['question'];
                 $value = $row['value'];
                 $typ = $row['typ'];
@@ -1045,7 +1041,6 @@ if ($type == 'responses') {
                         $summaryYesNo[$question][$label]++;
                     }
                 }
-            }
         }
         ?>
 
@@ -1067,7 +1062,7 @@ if ($type == 'responses') {
                 <tbody>
                     <?php
                     $srnumber = 1;
-                    foreach ($feedbackQuestionsArray as $qid => $qname) {
+                    foreach ($responseQuestions as $qname) {
                         if (isset($summaryLikert[$qname])) {
                             echo "<tr>";
                             echo "<td>" . $srnumber . "</td>";
@@ -1104,7 +1099,7 @@ if ($type == 'responses') {
                     <tbody>
                         <?php
                         $srnumberForYesNo = 1;
-                        foreach ($feedbackQuestionsArray as $qid => $qname) {
+                        foreach ($responseQuestions as $qname) {
                             if (isset($summaryYesNo[$qname])) {
                                 echo "<tr>";
                                 echo "<td>" . $srnumberForYesNo . "</td>";
@@ -1122,6 +1117,7 @@ if ($type == 'responses') {
         <?php } ?>
 
     </div>
+    <?php } ?>
 
         <?php } else { ?>
 
@@ -1254,8 +1250,28 @@ if ($type == 'responses') {
             URL.revokeObjectURL(url);
         }
 
-        document.getElementById('type').addEventListener("change", function () {
-            document.getElementById('reportTypeForm').submit();
+        const reportType = document.getElementById('type');
+        const responseFeedback = document.getElementById('responseFeedback');
+        const responseFeedbackControl = document.getElementById('responseFeedbackControl');
+        const reportTypeForm = document.getElementById('reportTypeForm');
+
+        reportType.addEventListener('change', function () {
+            if (this.value === 'responses') {
+                responseFeedbackControl.style.display = 'inline';
+                if (responseFeedback.value !== '') {
+                    reportTypeForm.submit();
+                }
+                return;
+            }
+
+            responseFeedbackControl.style.display = 'none';
+            reportTypeForm.submit();
+        });
+
+        responseFeedback.addEventListener('change', function () {
+            if (reportType.value === 'responses' && this.value !== '') {
+                reportTypeForm.submit();
+            }
         });
     </script>
 </body>
