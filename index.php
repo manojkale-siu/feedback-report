@@ -1,6 +1,6 @@
 <?php
- require_once ('../../config.php');
-require_once "database.php";
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/database.php';
 
 require_login(0, true);
 if (isloggedin()) {
@@ -185,6 +185,23 @@ if($debugging) {
 
     
     <script>
+        const feedbackReportDebug = <?php echo $debugging ? 'true' : 'false'; ?>;
+
+        function feedbackDebug(message, context = {}) {
+            if (feedbackReportDebug) {
+                console.log('[Feedback Report] ' + message, context);
+            }
+        }
+
+        function feedbackAjaxError(xhr, textStatus, errorThrown, message) {
+            feedbackDebug(message, {
+                status: xhr.status,
+                textStatus: textStatus,
+                error: errorThrown,
+                response: xhr.responseText
+            });
+        }
+
         function changeActionFile() {
     let role = document.getElementById("role").value;
     let form = document.getElementById("myForm");
@@ -208,9 +225,11 @@ if($debugging) {
             type: "POST",
             data: { programId: programId },
             success: function(response) {
+                feedbackDebug('Batch options loaded.', { programId: programId, responseLength: response.length });
                 $("#batchSelect").html(response); // Populate batch dropdown
             },
-            error: function() {
+            error: function(xhr, textStatus, errorThrown) {
+                feedbackAjaxError(xhr, textStatus, errorThrown, 'Batch options request failed.');
                 alert("Error fetching batches!");
             }
         });
@@ -229,9 +248,11 @@ if($debugging) {
             type: "POST",
             data: { batchId:batchId },
             success: function(response) {
+                feedbackDebug('Semester options loaded.', { batchId: batchId, responseLength: response.length });
                 $("#semesterSelect").html(response); // Populate batch dropdown
             },
-            error: function() {
+            error: function(xhr, textStatus, errorThrown) {
+                feedbackAjaxError(xhr, textStatus, errorThrown, 'Semester options request failed.');
                 alert("Error fetching batches!");
             }
         });
@@ -252,7 +273,7 @@ function getSelectedCourse() {
             type: "POST",
             data: { semId: semId },
             success: function(response) {
-                console.log(response);
+                feedbackDebug('Course options loaded.', { semId: semId, courseCount: Array.isArray(response) ? response.length : 0 });
 
                 if (!response || response.length === 0 || response === "[]") {
                     Swal.fire({
@@ -268,8 +289,8 @@ function getSelectedCourse() {
                     document.getElementById("submit").disabled = false;
                 }
             },
-            error: function(error) {
-                console.log(error);
+            error: function(xhr, textStatus, errorThrown) {
+                feedbackAjaxError(xhr, textStatus, errorThrown, 'Course options request failed.');
                 Swal.fire({
                     icon: "error",
                     title: "Oops...",
@@ -302,7 +323,7 @@ function getSelectedCourse() {
             if (radioButton) {
                 radioButton.checked = true;
             }
-            console.log("inside")
+            feedbackDebug('Stakeholder report selected.');
             document.getElementsByClassName("studentform")[0].style.display = 'none';
             document.getElementsByClassName("stakeholderForm")[0].style.display = 'block';
             document.getElementsByClassName("stakeholderForm")[0].style.display = 'flex';
@@ -325,15 +346,14 @@ function getSelectedCourse() {
             feedbackSelect.innerHTML = '<option value="">Select Feedback</option>';
 
             let feedbackList = <?php echo json_encode($stakeHolderFeedbacks); ?>;
-            console.log("FList : ", feedbackList)
-            console.log("selectedCourse", selectedCourse)
+            feedbackDebug('Stakeholder feedback options loaded.', { selectedCourse: selectedCourse, feedbackList: feedbackList });
             if (feedbackSelect !== '') {
                 for(let courseId in feedbackList) {
                     for(let feedbackId in feedbackList[courseId]){
                         if(courseId === selectedCourse) {
                             feedbackSelect.innerHTML += '<option value="' + feedbackId + '">' + feedbackList[courseId][feedbackId] + '</option>';
                         } else{
-                            console.log("Not matched" , courseId , " ", selectedCourse)
+                            feedbackDebug('Feedback course did not match the selected course.', { courseId: courseId, selectedCourse: selectedCourse });
                         }
                     }
                 }
