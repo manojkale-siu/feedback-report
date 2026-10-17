@@ -278,7 +278,7 @@ else{
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consolidated Feedback</title>
-    <link rel="stylesheet" href="feedbacktable.css">
+    <link rel="stylesheet" href="assets/css/report.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 
@@ -382,10 +382,10 @@ else{
                 foreach ($feedbackIds as $fid) {
                     if (isset($user['feedbacks'][$fid])) {
                         if ($user['feedbacks'][$fid] == 1) {
-                            echo "<td id='value'><img src='check.png' alt='Yes' data-export='Yes'/></td>";
+                            echo "<td id='value'><img src='assets/images/check.png' alt='Yes' data-export='Yes'/></td>";
                             $submitted++;
                         } else {
-                            echo "<td id='value'><img src='remove.png' alt='No' data-export='No'/></td>";
+                            echo "<td id='value'><img src='assets/images/remove.png' alt='No' data-export='No'/></td>";
                             $notSubmitted++;
                         }
                     } else {

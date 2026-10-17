@@ -111,7 +111,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stakeholder Feedback</title>
-    <link rel="stylesheet" href="stakeholder.css">
+    <link rel="stylesheet" href="assets/css/stakeholder.css">
 </head>
 
 <body>

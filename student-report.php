@@ -651,7 +651,7 @@ if ($type == 'responses') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consolidated Feedback</title>
-    <link rel="stylesheet" href="feedbacktable.css">
+    <link rel="stylesheet" href="assets/css/report.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
     <style>
@@ -802,12 +802,12 @@ if ($type == 'responses') {
                                         foreach ($courseDetails[$courseid] as $feedbackId => $completedStatus) {
                                             if ((isset($feedbackListInCourse[$feedbackId])) && !is_array($feedbackListInCourse[$feedbackId])) {
                                                 if ($completedStatus == 1) {
-                                                    echo "<td id='value'><img src='check.png' alt='loading' data-export='Yes'/></td>";
+                                                    echo "<td id='value'><img src='assets/images/check.png' alt='loading' data-export='Yes'/></td>";
                                                     $submittedCount++;
                                                 } else if ($completedStatus === 'NA') {
                                                     echo "<td id='value'>NA</td>";
                                                 } else {
-                                                    echo "<td id='value'><img src='remove.png' alt='loading' data-export='No'/></td>";
+                                                    echo "<td id='value'><img src='assets/images/remove.png' alt='loading' data-export='No'/></td>";
                                                     $notSubmittedCount++;
                                                 }
                                             }
