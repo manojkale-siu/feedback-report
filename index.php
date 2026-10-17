@@ -1,6 +1,6 @@
 <?php
  require_once ('../../config.php');
-require_once "db.php";
+require_once "database.php";
 
 require_login(0, true);
 if (isloggedin()) {
@@ -104,7 +104,7 @@ if($debugging) {
             </div>
         </div>
         <div class="content">
-            <form action="main_1.php" method="post" class='studentform' id='myForm'>
+            <form action="student-report.php" method="post" class='studentform' id='myForm'>
                 <label class="heading" for="programSelect">Name of Programme:</label>
                 <div class="selection">
                 
@@ -158,7 +158,7 @@ if($debugging) {
             </form>
 
             <!-- For Alumni / parent/ survey / Industry -->
-            <form action="stakeholder.php" method="post" class='stakeholderForm' style="display:none">
+            <form action="stakeholder-report.php" method="post" class='stakeholderForm' style="display:none">
                 <label class="heading" for="courseSelect">Name of Feedback Course:</label>
                 <div class="selection">
                     <select name="courseSelect" id="courseSelect" required>
@@ -190,11 +190,11 @@ if($debugging) {
     let form = document.getElementById("myForm");
 
     if (role === "5") {
-        form.action = "Consolidated-Feedback_2.php";  
+        form.action = "student-report.php";
     } else if (role === "3") {
-        form.action = "Faculty-Feedback_1.php";  
+        form.action = "faculty-report.php";
     } else {
-        form.action = "main_1.php"; 
+        form.action = "student-report.php";
     }
 }
 
@@ -204,7 +204,7 @@ if($debugging) {
     if (programId) {
         // AJAX request to fetch batches
         $.ajax({
-            url: "ajax_call.php",  // PHP file to fetch batches
+            url: "ajax/options.php",  // Fetch batches
             type: "POST",
             data: { programId: programId },
             success: function(response) {
@@ -225,7 +225,7 @@ if($debugging) {
     if (batchId) {
         // AJAX request to fetch batches
         $.ajax({
-            url: "ajax_call.php",  // PHP file to fetch batches
+            url: "ajax/options.php",  // Fetch semesters
             type: "POST",
             data: { batchId:batchId },
             success: function(response) {
@@ -248,7 +248,7 @@ function getSelectedCourse() {
 
     if (semId) {
         $.ajax({
-            url: "ajax_call.php",  
+            url: "ajax/options.php",
             type: "POST",
             data: { semId: semId },
             success: function(response) {

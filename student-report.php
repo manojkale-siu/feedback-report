@@ -1,6 +1,6 @@
 <?php
 
-require_once('db.php');
+require_once('database.php');
 session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

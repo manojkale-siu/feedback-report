@@ -1,5 +1,5 @@
 <?php
-require_once "db.php";
+require_once "../database.php";
 
 
 //For the fetching the batch of particular the program

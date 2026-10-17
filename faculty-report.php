@@ -1,6 +1,6 @@
 <?php
 
-require_once('db.php');
+require_once('database.php');
 session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -286,7 +286,7 @@ else{
     <div class="container">
         <div class="header">
 
-            <form action="Faculty-Feedback_1.php" method="post" id='reportTypeForm'>
+            <form action="faculty-report.php" method="post" id='reportTypeForm'>
                 <select name="type" id="type" >
                     <option value="consolidated" <?php if($type=="consolidated") echo "selected"; ?>>Consolidated Report</option>
                     <option value="responses" <?php if($type=="responses") echo "selected"; ?>>Responses Report</option>
