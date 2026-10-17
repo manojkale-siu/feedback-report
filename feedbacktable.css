@@ -1,0 +1,158 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+
+
+.container .header {
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.container .header select {
+    border-radius: 9px;
+    padding: 5px 10px;
+}
+.container .header button{
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: none;
+    color: white;
+    background: #483d8b;
+    cursor: pointer;
+}
+
+.container .headings {
+    display: flex
+;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.container .header  .headings h1 {
+    font-family: math;
+    color: darkslateblue;
+}
+
+.container .data {
+
+}
+
+.container .data table  {
+    border-collapse: collapse;
+}
+
+.container .data table thead tr th {
+    font-family: math;
+    font-size: 20px;
+    padding: 5px 15px;
+    background: lavender;
+}
+.container .data table tbody tr #heading {
+    background: lavender;
+    padding: 5px 10px;
+    font-family: math;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+}
+.container .data table tbody tr #value {
+    padding: 5px 10px;
+    font-family: math;
+    font-size: 16px;
+    text-align: center;
+}
+.container .data table tbody tr #value img {
+    width: 25px;
+}
+
+
+
+/* === TABLE SCROLL WRAPPER === */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  position: relative;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  max-height: 85vh; /* optional, add vertical scroll if needed */
+}
+
+/* === TABLE BASE STYLING === */
+.feedback-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 1200px; /* make sure horizontal scroll triggers */
+  table-layout: auto;
+  white-space: nowrap;
+}
+
+.feedback-table th,
+.feedback-table td {
+  border: 1px solid #ccc;
+  padding: 8px 10px;
+  text-align: center;
+  background-color: #fff;
+  vertical-align: middle;
+  font-size: 14px;
+}
+
+/* === HEADER FIXED ON SCROLL === */
+.feedback-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #f2f2f2;
+}
+
+/* === STICKY FIRST THREE COLUMNS === */
+.feedback-table th:first-child,
+.feedback-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background: #f9f9f9;
+  min-width: 60px;
+}
+
+.feedback-table th:nth-child(2),
+.feedback-table td:nth-child(2) {
+  position: sticky;
+  left: 60px;
+  z-index: 10;
+  background: #f9f9f9;
+  min-width: 180px;
+  text-align: left;
+}
+
+.feedback-table th:nth-child(3),
+.feedback-table td:nth-child(3) {
+  position: sticky;
+  left: 240px;
+  z-index: 10;
+  background: #f9f9f9;
+  min-width: 250px;
+  text-align: left;
+}
+
+/* === Z-INDEX CONTROL (to prevent overlap) === */
+.feedback-table thead th:first-child,
+.feedback-table thead th:nth-child(2),
+.feedback-table thead th:nth-child(3) {
+  z-index: 15;
+}
+
+/* === Hover and Alternating Row Colors === */
+.feedback-table tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.feedback-table tbody tr:hover {
+  background-color: #f1f1f1;
+}
